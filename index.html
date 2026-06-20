@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LodgePro">
+<meta name="theme-color" content="#0D1117">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Lodge Tracker Pro</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg: #0D1117;
+  --surface: #161B22;
+  --surface2: #1C2330;
+  --border: #30363D;
+  --gold: #F0C040;
+  --gold2: #D4A017;
+  --green: #3FB950;
+  --red: #F85149;
+  --blue: #58A6FF;
+  --text: #E6EDF3;
+  --muted: #8B949E;
+  --white: #FFFFFF;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ── SETUP SCREEN ── */
+.full-screen {
+  position: fixed; inset: 0; z-index: 999;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  background: linear-gradient(135deg, #0D1117 0%, #1a1f2e 50%, #0D1117 100%);
+}
+.setup-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px 28px;
+  width: 100%; max-width: 420px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+}
+.setup-brand {
+  text-align: center; margin-bottom: 28px;
+}
+.setup-brand .icon { font-size: 44px; margin-bottom: 8px; }
+.setup-brand h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px; color: var(--gold); margin-bottom: 4px;
+}
+.setup-brand p { font-size: 13px; color: var(--muted); }
+
+/* ── PIN SCREEN ── */
+.pin-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 36px 28px;
+  width: 100%; max-width: 320px;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+}
+.pin-lodge { font-family: 'Cormorant Garamond', serif; font-size: 24px; color: var(--gold); margin-bottom: 2px; }
+.pin-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+.pin-dots { display: flex; justify-content: center; gap: 10px; margin-bottom: 28px; flex-wrap: wrap; }
+.pin-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid var(--border); background: transparent; transition: all 0.2s;
+}
+.pin-dot.filled { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 8px rgba(240,192,64,0.5); }
+.pin-pad { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 14px; }
+.pin-key {
+  padding: 18px; border-radius: 14px;
+  border: 1px solid var(--border); background: var(--surface2);
+  font-size: 22px; font-weight: 700; cursor: pointer;
+  font-family: 'Inter', sans-serif; color: var(--text);
+  transition: all 0.15s;
+}
+.pin-key:active, .pin-key:hover { background: var(--border); transform: scale(0.95); }
+.pin-key.del { background: rgba(248,81,73,0.15); color: var(--red); border-color: rgba(248,81,73,0.3); }
+.pin-error { color: var(--red); font-size: 13px; margin-top: 8px; min-height: 20px; }
+
+/* ── HEADER ── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 58px; position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: center; gap: 10px; min-width: 70px; }
+.header-logo-img { width: 32px; height: 32px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); }
+.lodge-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--gold); letter-spacing: 0.3px; }
+.hdate { font-size: 11px; color: var(--muted); text-align: right; line-height: 1.4; }
+.btn-back {
+  background: rgba(255,255,255,0.05); color: var(--muted);
+  border: 1px solid var(--border); padding: 6px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif;
+  display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s;
+}
+.btn-back:hover { color: var(--text); border-color: var(--muted); }
+
+/* ── NAV ── */
+nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; overflow-x: auto; scrollbar-width: none;
+}
+nav::-webkit-scrollbar { display: none; }
+nav button {
+  background: none; border: none; color: var(--muted);
+  padding: 13px 16px; font-size: 12px; font-family: 'Inter', sans-serif;
+  font-weight: 500; cursor: pointer; white-space: nowrap;
+  border-bottom: 2px solid transparent; transition: all 0.2s; letter-spacing: 0.3px;
+}
+nav button.active { color: var(--gold); border-bottom-color: var(--gold); }
+nav button:hover { color: var(--text); }
+
+main { padding: 16px; max-width: 960px; margin: 0 auto; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* ── DASHBOARD STAT CARDS ── */
+.stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 20px; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px 12px; text-align: center;
+  position: relative; overflow: hidden;
+}
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.stat-card.gold::before { background: linear-gradient(90deg, var(--gold), var(--gold2)); }
+.stat-card.green::before { background: var(--green); }
+.stat-card.red::before { background: var(--red); }
+.stat-card .sval { font-size: 28px; font-weight: 700; margin-bottom: 2px; }
+.stat-card.gold .sval { color: var(--gold); }
+.stat-card.green .sval { color: var(--green); }
+.stat-card.red .sval { color: var(--red); }
+.stat-card .slabel { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+.stat-card .ssub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+/* ── SECTION HEADER ── */
+.sec-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
+}
+.sec-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; color: var(--text); letter-spacing: 0.3px;
+}
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: var(--muted); align-items: center; }
+.leg { display: flex; align-items: center; gap: 4px; }
+.leg-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+/* ── ROOM GRID ── */
+.rooms-btn-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px; margin-bottom: 18px;
+}
+.room-btn {
+  aspect-ratio: 1; border-radius: 12px; border: 1px solid var(--border);
+  cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-family: 'Inter', sans-serif; font-weight: 700;
+  transition: transform 0.15s, box-shadow 0.15s;
+  position: relative; overflow: hidden;
+}
+.room-btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: rgba(255,255,255,0); transition: background 0.15s;
+}
+.room-btn:hover::after { background: rgba(255,255,255,0.05); }
+.room-btn:hover { transform: scale(1.05); }
+.room-btn .rnum { font-size: 18px; font-weight: 800; }
+.room-btn .rstatus { font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; margin-top: 2px; opacity: 0.85; }
+
+.room-btn.free {
+  background: linear-gradient(135deg, #0d2818, #143d22);
+  color: #3FB950; border-color: rgba(63,185,80,0.3);
+}
+.room-btn.paid {
+  background: linear-gradient(135deg, #1a2a0d, #2d4a14);
+  color: var(--gold); border-color: rgba(240,192,64,0.4);
+  box-shadow: 0 0 12px rgba(240,192,64,0.15);
+}
+.room-btn.unpaid {
+  background: linear-gradient(135deg, #2a0d0d, #4a1414);
+  color: var(--red); border-color: rgba(248,81,73,0.4);
+  box-shadow: 0 0 12px rgba(248,81,73,0.15);
+}
+
+/* ── ROOM DETAIL ── */
+.room-detail {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px; margin-bottom: 18px;
+  border-top: 3px solid var(--gold);
+  animation: slideIn 0.25s ease;
+}
+@keyframes slideIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+.room-detail-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px; flex-wrap: wrap; gap: 8px;
+}
+.room-detail-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--gold); }
+
+.paid-toggle {
+  padding: 7px 16px; border-radius: 20px; border: 1px solid;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  font-family: 'Inter', sans-serif; transition: all 0.2s; letter-spacing: 0.3px;
+}
+.paid-toggle.paid { background: rgba(63,185,80,0.15); color: var(--green); border-color: rgba(63,185,80,0.4); }
+.paid-toggle.unpaid { background: rgba(248,81,73,0.15); color: var(--red); border-color: rgba(248,81,73,0.4); }
+
+.guest-hero {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 14px;
+}
+.guest-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold2), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800; color: #000; flex-shrink: 0;
+}
+.guest-name-big { font-size: 16px; font-weight: 700; color: var(--text); }
+.guest-phone-big { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.detail-box {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 12px;
+}
+.detail-box .dk { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 4px; }
+.detail-box .dv { font-size: 13px; font-weight: 600; color: var(--text); }
+.detail-box .dd { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+.night-strip {
+  display: flex; align-items: center; justify-content: space-around;
+  background: linear-gradient(135deg, #1a1f0a, #2a3010);
+  border: 1px solid rgba(240,192,64,0.25);
+  border-radius: 12px; padding: 12px 16px; margin-bottom: 14px;
+}
+.night-strip .ni { text-align: center; }
+.night-strip .nk { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
+.night-strip .nv { font-size: 18px; font-weight: 800; color: var(--text); }
+.night-strip .nv.gold { color: var(--gold); font-size: 22px; }
+.night-strip .divider { width: 1px; height: 36px; background: var(--border); }
+
+.detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 9px 16px; border-radius: 8px; border: none;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  font-family: 'Inter', sans-serif; transition: all 0.2s; letter-spacing: 0.2px;
+}
+.btn:hover { opacity: 0.85; transform: translateY(-1px); }
+.btn-gold { background: linear-gradient(135deg, var(--gold2), var(--gold)); color: #000; }
+.btn-primary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-primary:hover { border-color: var(--gold); color: var(--gold); }
+.btn-danger { background: rgba(248,81,73,0.15); color: var(--red); border: 1px solid rgba(248,81,73,0.3); }
+.btn-cancel { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+.btn-green { background: rgba(63,185,80,0.15); color: var(--green); border: 1px solid rgba(63,185,80,0.3); }
+.btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+
+/* ── BOOKINGS LIST ── */
+.booking-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  transition: border-color 0.2s;
+}
+.booking-item:hover { border-color: var(--gold); }
+.bi-name { font-weight: 600; font-size: 14px; color: var(--text); }
+.bi-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.bi-amount { font-weight: 700; font-size: 16px; color: var(--gold); white-space: nowrap; }
+
+/* ── REPORT STRIP ── */
+.report-strip {
+  background: linear-gradient(135deg, var(--surface2), var(--surface));
+  border: 1px solid var(--border); border-left: 3px solid var(--gold);
+  border-radius: 12px; padding: 12px 16px; margin-bottom: 16px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+}
+.report-strip .rtitle { font-size: 13px; font-weight: 600; color: var(--text); }
+.report-strip .rsub { font-size: 11px; color: var(--muted); }
+
+/* ── TABLES ── */
+.tbl-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; background: var(--surface); }
+thead { background: var(--surface2); }
+th { padding: 11px 14px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.7px; color: var(--muted); white-space: nowrap; }
+td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: middle; color: var(--text); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+
+.badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.badge-green { background: rgba(63,185,80,0.15); color: var(--green); border: 1px solid rgba(63,185,80,0.3); }
+.badge-red { background: rgba(248,81,73,0.15); color: var(--red); border: 1px solid rgba(248,81,73,0.3); }
+.badge-gray { background: rgba(139,148,158,0.15); color: var(--muted); border: 1px solid var(--border); }
+
+/* ── MODAL ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+  z-index: 200; align-items: center; justify-content: center; padding: 16px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 18px; padding: 24px; width: 100%; max-width: 460px;
+  max-height: 92vh; overflow-y: auto;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.7);
+  animation: slideIn 0.2s ease;
+}
+.modal h3 { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--gold); margin-bottom: 16px; }
+.form-group { margin-bottom: 12px; }
+.form-group label { display: block; font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 5px; }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: 8px;
+  font-size: 14px; font-family: 'Inter', sans-serif;
+  background: var(--surface2); color: var(--text); outline: none;
+  transition: border-color 0.15s;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--gold); }
+.form-group select option { background: var(--surface2); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.modal-actions { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+
+/* ── SETTINGS ── */
+.settings-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px; margin-bottom: 12px;
+}
+.settings-card h4 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 14px; }
+
+/* ── HISTORY ── */
+.history-day {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; margin-bottom: 12px; overflow: hidden;
+}
+.history-day-head {
+  background: var(--surface2); padding: 12px 16px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.history-day-head .hd-date { font-weight: 700; font-size: 14px; color: var(--text); }
+.history-day-head .hd-stats { font-size: 12px; color: var(--muted); }
+
+.empty { text-align: center; padding: 40px 20px; color: var(--muted); }
+.empty .icon { font-size: 36px; margin-bottom: 8px; opacity: 0.5; }
+.empty p { font-size: 13px; }
+
+
+/* ── SEARCH BAR ── */
+.search-bar {
+  display: flex; gap: 8px; margin-bottom: 14px; align-items: center;
+}
+.search-bar input {
+  flex: 1; padding: 10px 14px; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--surface2); color: var(--text);
+  font-size: 13px; font-family: 'Inter', sans-serif; outline: none;
+  transition: border-color 0.2s;
+}
+.search-bar input:focus { border-color: var(--gold); }
+.search-bar input::placeholder { color: var(--muted); }
+.search-results {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden; margin-bottom: 14px;
+}
+.search-result-item {
+  padding: 11px 14px; border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 13px; cursor: pointer; transition: background 0.15s;
+}
+.search-result-item:last-child { border-bottom: none; }
+.search-result-item:hover { background: var(--surface2); }
+
+/* ── CHART ── */
+.chart-wrap {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px; margin-bottom: 18px;
+}
+.chart-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 14px; }
+.chart-bars {
+  display: flex; align-items: flex-end; gap: 6px;
+  height: 100px; padding-bottom: 24px; position: relative;
+}
+.chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+.chart-bar {
+  width: 100%; border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, var(--gold), var(--gold2));
+  min-height: 4px; transition: height 0.4s ease;
+  position: relative;
+}
+.chart-bar:hover::after {
+  content: attr(data-tip);
+  position: absolute; bottom: 105%; left: 50%; transform: translateX(-50%);
+  background: var(--surface2); color: var(--gold); border: 1px solid var(--border);
+  padding: 3px 7px; border-radius: 6px; font-size: 10px; white-space: nowrap; font-weight: 700;
+}
+.chart-bar-label { font-size: 9px; color: var(--muted); text-align: center; white-space: nowrap; }
+
+/* ── ROOM PRICING ── */
+.pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.price-type-card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px;
+}
+.price-type-card label { display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 5px; }
+.price-type-card input {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+  border-radius: 7px; background: var(--surface); color: var(--gold);
+  font-size: 16px; font-weight: 700; font-family: 'Inter', sans-serif; outline: none;
+}
+.price-type-card input:focus { border-color: var(--gold); }
+
+/* ── CHECKOUT ALERT ── */
+.checkout-alert {
+  background: rgba(248,81,73,0.1); border: 1px solid rgba(248,81,73,0.3);
+  border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;
+  display: none;
+}
+.checkout-alert .ca-title { font-size: 13px; font-weight: 700; color: var(--red); margin-bottom: 6px; }
+.checkout-alert .ca-item { font-size: 12px; color: var(--text); padding: 3px 0; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div class="full-screen" id="setupScreen" style="display:none">
+  <div class="setup-card">
+    <div class="setup-brand">
+      <div class="icon">🏨</div>
+      <h2>Lodge Tracker Pro</h2>
+      <p>Set up your lodge to get started</p>
+    </div>
+    <div class="form-group"><label>Lodge Name</label><input type="text" id="setupName" placeholder="e.g. Sunrise Lodge"></div>
+    <div class="form-group"><label>Number of Rooms</label><input type="number" id="setupRooms" value="20" min="1" max="200"></div>
+    <div class="form-group">
+      <label>Lodge Logo (optional)</label>
+      <input type="file" id="setupLogo" accept="image/*" onchange="previewLogo('setupLogo','logoPreview')">
+      <img id="logoPreview" style="width:60px;height:60px;border-radius:10px;object-fit:cover;margin-top:8px;border:1px solid var(--border);display:none">
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Set PIN (8 digits)</label><input type="password" id="setupPin" placeholder="••••••••" maxlength="8" inputmode="numeric" style="font-size:22px;letter-spacing:6px;text-align:center"></div>
+      <div class="form-group"><label>Confirm PIN</label><input type="password" id="setupPin2" placeholder="••••••••" maxlength="8" inputmode="numeric" style="font-size:22px;letter-spacing:6px;text-align:center"></div>
+    </div>
+    <button class="btn btn-gold" style="width:100%;justify-content:center;padding:12px;font-size:14px;margin-top:4px;border-radius:10px" onclick="completeSetup()">🚀 Launch My Lodge</button>
+  </div>
+</div>
+
+<!-- PIN SCREEN -->
+<div class="full-screen" id="pinScreen" style="display:none">
+  <div class="pin-card">
+    <img id="pinLogo" style="width:56px;height:56px;border-radius:12px;object-fit:cover;margin:0 auto 12px;border:1px solid var(--border);display:none">
+    <div class="pin-lodge" id="pinLodgeName">Lodge Tracker Pro</div>
+    <div class="pin-sub">Enter your PIN to continue</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+      <div class="pin-dot" id="pd4"></div><div class="pin-dot" id="pd5"></div>
+      <div class="pin-dot" id="pd6"></div><div class="pin-dot" id="pd7"></div>
+    </div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <div></div>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key del" onclick="pinDel()">⌫</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<header>
+  <div class="header-left">
+    <button class="btn-back" id="backBtn" style="display:none" onclick="goHome()">← Back</button>
+    <img id="headerLogo" class="header-logo-img" style="display:none">
+  </div>
+  <div class="lodge-title" id="headerName">Lodge Tracker</div>
+  <div class="hdate" id="headerDate"></div>
+</header>
+
+<nav>
+  <button class="active" onclick="showTab('dashboard',this)">🏠 Home</button>
+  <button onclick="showTab('bookings',this)">🛏 Rooms</button>
+  <button onclick="showTab('staff',this)">👥 Staff</button>
+  <button onclick="showTab('search',this)">🔍 Search</button>
+  <button onclick="showTab('history',this)">📅 History</button>
+  <button onclick="showTab('settings',this)">⚙️ Settings</button>
+</nav>
+
+<main>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="section active">
+
+  <!-- CHECKOUT REMINDER BUTTON -->
+  <div style="margin-bottom:16px">
+    <button onclick="openCheckoutModal()" id="checkoutBtn" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(248,81,73,0.4);background:rgba(248,81,73,0.1);color:var(--red);font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.2s;">
+      <span>⏰ Checkout Reminders</span>
+      <span id="checkoutBtnBadge" style="background:var(--red);color:#fff;border-radius:20px;padding:2px 10px;font-size:12px;display:none">0</span>
+    </button>
+  </div>
+
+  <!-- CHECKOUT MODAL -->
+  <div class="modal-overlay" id="checkoutModal">
+    <div class="modal">
+      <h3>⏰ Checkout Reminders</h3>
+      <div id="checkoutAlertList" style="margin-bottom:16px"></div>
+      <div class="modal-actions">
+        <button class="btn btn-cancel" onclick="closeModal('checkoutModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INCOME CHART -->
+  <div class="chart-wrap">
+    <div class="chart-title">📈 Income — Last 7 Days</div>
+    <div class="chart-bars" id="incomeChart"></div>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-card green">
+      <div class="sval" id="dOccupied">0</div>
+      <div class="slabel">Occupied</div>
+      <div class="ssub" id="dRoomSub">of 20 rooms</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="sval" id="dIncome">K0</div>
+      <div class="slabel">Income</div>
+      <div class="ssub">Paid today</div>
+    </div>
+    <div class="stat-card red">
+      <div class="sval" id="dUnpaid">0</div>
+      <div class="slabel">Unpaid</div>
+      <div class="ssub">Rooms owing</div>
+    </div>
+  </div>
+
+  <div class="sec-header">
+    <div class="sec-title">All Rooms</div>
+    <div class="legend">
+      <span class="leg"><span class="leg-dot" style="background:#143d22;border:1px solid rgba(63,185,80,0.4)"></span>Free</span>
+      <span class="leg"><span class="leg-dot" style="background:#2d4a14;border:1px solid rgba(240,192,64,0.4)"></span>Paid</span>
+      <span class="leg"><span class="leg-dot" style="background:#4a1414;border:1px solid rgba(248,81,73,0.4)"></span>Unpaid</span>
+    </div>
+  </div>
+  <div class="rooms-btn-grid" id="dashRoomsGrid" style="margin-bottom:20px"></div>
+
+  <div class="report-strip">
+    <div>
+      <div class="rtitle">📋 Daily Report</div>
+      <div class="rsub">Print or save today's summary to your device</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="printReport()">🖨 Print</button>
+      <button class="btn btn-gold btn-sm" onclick="saveReport()">💾 Save to Device</button>
+    </div>
+  </div>
+
+  <div class="sec-header"><div class="sec-title">Today's Guests</div></div>
+  <div id="dashBookings"><div class="empty"><div class="icon">🛏</div><p>No guests checked in yet</p></div></div>
+</div>
+
+<!-- ROOMS -->
+<div id="bookings" class="section">
+  <div class="sec-header">
+    <div class="sec-title">Rooms</div>
+    <div class="legend">
+      <span class="leg"><span class="leg-dot" style="background:#143d22;border:1px solid rgba(63,185,80,0.4)"></span>Free</span>
+      <span class="leg"><span class="leg-dot" style="background:#2d4a14;border:1px solid rgba(240,192,64,0.4)"></span>Paid</span>
+      <span class="leg"><span class="leg-dot" style="background:#4a1414;border:1px solid rgba(248,81,73,0.4)"></span>Unpaid</span>
+    </div>
+  </div>
+  <div class="rooms-btn-grid" id="roomsBtnGrid"></div>
+  <div class="room-detail" id="roomDetail" style="display:none">
+    <div class="room-detail-head">
+      <div class="room-detail-title" id="detailTitle">Room 1</div>
+      <button class="paid-toggle" id="paidToggle" onclick="togglePaid()"></button>
+    </div>
+    <div id="detailContent"></div>
+    <div class="detail-actions" id="detailActions"></div>
+  </div>
+</div>
+
+<!-- STAFF -->
+<div id="staff" class="section">
+  <div class="sec-header">
+    <div class="sec-title">Staff</div>
+    <button class="btn btn-gold btn-sm" id="addStaffBtn">+ Add Staff</button>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Name</th><th>Role</th><th>Phone</th><th>Salary</th><th>Status</th><th></th></tr></thead>
+      <tbody id="staffTbody"></tbody>
+    </table>
+  </div>
+  <div id="staffEmpty" class="empty" style="display:none"><div class="icon">👥</div><p>No staff added yet</p></div>
+</div>
+
+<!-- SEARCH -->
+<div id="search" class="section">
+  <div class="sec-header">
+    <div class="sec-title">Search Guests</div>
+  </div>
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search by name or phone number..." oninput="runSearch()">
+  </div>
+  <div id="searchResults"><div class="empty"><div class="icon">🔍</div><p>Type a name or phone number to search</p></div></div>
+</div>
+
+<!-- HISTORY -->
+<div id="history" class="section">
+  <div class="sec-header">
+    <div class="sec-title">History</div>
+    <div style="font-size:12px;color:var(--muted)">Last 30 days</div>
+  </div>
+  <div id="historyContent"></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings" class="section">
+  <div class="sec-header"><div class="sec-title">Settings</div></div>
+  <div class="settings-card">
+    <h4>🏨 Lodge Details</h4>
+    <div class="form-group"><label>Lodge Name</label><input type="text" id="setName"></div>
+    <div class="form-group"><label>Number of Rooms</label><input type="number" id="setRooms" min="1" max="200"></div>
+    <div class="form-group">
+      <label>Logo (upload new)</label>
+      <input type="file" id="setLogo" accept="image/*" onchange="previewLogo('setLogo','setLogoPreview')">
+      <img id="setLogoPreview" style="width:56px;height:56px;border-radius:10px;object-fit:cover;margin-top:8px;border:1px solid var(--border);display:none">
+    </div>
+    <button class="btn btn-gold" onclick="saveSettings()">Save Changes</button>
+  </div>
+  <div class="settings-card">
+    <h4>💰 Room Pricing</h4>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Set default rates by room type. These auto-fill when checking in a guest.</p>
+    <div class="pricing-grid">
+      <div class="price-type-card"><label>Single</label><input type="number" id="priceSingle" placeholder="0" oninput="savePricing()"></div>
+      <div class="price-type-card"><label>Double</label><input type="number" id="priceDouble" placeholder="0" oninput="savePricing()"></div>
+      <div class="price-type-card"><label>Twin</label><input type="number" id="priceTwin" placeholder="0" oninput="savePricing()"></div>
+      <div class="price-type-card"><label>Suite</label><input type="number" id="priceSuite" placeholder="0" oninput="savePricing()"></div>
+      <div class="price-type-card"><label>Family</label><input type="number" id="priceFamily" placeholder="0" oninput="savePricing()"></div>
+      <div class="price-type-card"><label>Standard</label><input type="number" id="priceStandard" placeholder="0" oninput="savePricing()"></div>
+    </div>
+  </div>
+
+  <div class="settings-card">
+    <h4>🔒 Change PIN</h4>
+    <div class="form-row">
+      <div class="form-group"><label>New PIN</label><input type="password" id="newPin" maxlength="8" inputmode="numeric" placeholder="••••••••" style="font-size:20px;letter-spacing:5px;text-align:center"></div>
+      <div class="form-group"><label>Confirm</label><input type="password" id="newPin2" maxlength="8" inputmode="numeric" placeholder="••••••••" style="font-size:20px;letter-spacing:5px;text-align:center"></div>
+    </div>
+    <button class="btn btn-primary" onclick="changePin()">Update PIN</button>
+  </div>
+  <div class="settings-card" style="border-left:3px solid var(--red)">
+    <h4>⚠️ Reset App</h4>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Deletes all data permanently.</p>
+    <button class="btn btn-danger" onclick="resetApp()">Reset Everything</button>
+  </div>
+</div>
+
+</main>
+
+<!-- BOOKING MODAL -->
+<div class="modal-overlay" id="bookingModal">
+  <div class="modal">
+    <h3 id="bookingModalTitle">Check In</h3>
+    <input type="hidden" id="bookingRoomNum">
+    <div class="form-group"><label>Guest Name</label><input type="text" id="bGuest" placeholder="Full name"></div>
+    <div class="form-group"><label>Room Type</label><select id="bRoomType" onchange="applyRoomPrice()"><option value="">-- Select Type --</option><option>Single</option><option>Double</option><option>Twin</option><option>Suite</option><option>Family</option><option>Standard</option></select></div>
+    <div class="form-group"><label>Phone Number</label><input type="tel" id="bPhone" placeholder="e.g. 097xxxxxxx"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date In</label><input type="date" id="bDateIn" oninput="calcNights()"></div>
+      <div class="form-group"><label>Date Out</label><input type="date" id="bDateOut" oninput="calcNights()"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Time In</label><input type="time" id="bTimeIn" value="14:00"></div>
+      <div class="form-group"><label>Time Out</label><input type="time" id="bTimeOut" value="11:00"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Rate / Night (ZMW)</label><input type="number" id="bNightRate" placeholder="0" oninput="calcNights()"></div>
+      <div class="form-group"><label>Nights (auto)</label><input type="number" id="bNights" readonly style="opacity:0.5"></div>
+    </div>
+    <div class="form-group"><label>Total Amount (ZMW)</label><input type="number" id="bAmount" placeholder="0"></div>
+    <div class="form-group"><label>Payment Status</label>
+      <select id="bPaid"><option value="unpaid">Unpaid</option><option value="paid">Paid</option></select>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="bNotes" rows="2" placeholder="Special requests..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-gold" onclick="saveBooking()">Save Booking</button>
+      <button class="btn btn-cancel" onclick="closeModal('bookingModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- STAFF MODAL -->
+<div class="modal-overlay" id="staffModal">
+  <div class="modal">
+    <h3 id="staffModalTitle">Add Staff</h3>
+    <input type="hidden" id="staffId">
+    <div class="form-group"><label>Full Name</label><input type="text" id="sName" placeholder="Full name"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Role</label>
+        <select id="sRole"><option>Receptionist</option><option>Cleaner</option><option>Security</option><option>Cook</option><option>Maintenance</option><option>Manager</option><option>Waiter</option><option>Other</option></select>
+      </div>
+      <div class="form-group"><label>Status</label>
+        <select id="sStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Phone</label><input type="tel" id="sPhone" placeholder="Phone"></div>
+    <div class="form-group"><label>Monthly Salary (ZMW)</label><input type="number" id="sSalary" placeholder="0"></div>
+    <div class="form-group"><label>Start Date</label><input type="date" id="sStart"></div>
+    <div class="modal-actions">
+      <button class="btn btn-gold" onclick="saveStaff()">Save</button>
+      <button class="btn btn-cancel" onclick="closeModal('staffModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────
+let cfg={name:'',rooms:20,pin:'',logo:''};
+let data={bookings:{},staff:[],lastDate:'',history:[]};
+
+function loadAll(){
+  try{const c=localStorage.getItem('ltpCfg2');if(c)cfg=JSON.parse(c);}catch(e){}
+  try{const d=localStorage.getItem('ltpData2');if(d)data=JSON.parse(d);}catch(e){}
+  if(!data.history)data.history=[];
+  if(!data.staff)data.staff=[];
+  if(!data.bookings||Array.isArray(data.bookings))data.bookings={};
+}
+function saveCfg(){localStorage.setItem('ltpCfg2',JSON.stringify(cfg));}
+function saveData(){localStorage.setItem('ltpData2',JSON.stringify(data));}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function fmt(n){return'K'+Number(n||0).toLocaleString();}
+function today(){return new Date().toISOString().slice(0,10);}
+function dayName(ds){if(!ds)return'';return new Date(ds+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long'});}
+function fmtDate(ds){if(!ds)return'-';return new Date(ds+'T12:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});}
+function fmtTime(t){if(!t)return'-';const[h,m]=t.split(':');const hr=Number(h);return`${hr%12||12}:${m} ${hr>=12?'PM':'AM'}`;}
+
+// ── LOGO PREVIEW ──────────────────────────────────────
+function previewLogo(inputId,previewId){
+  const file=document.getElementById(inputId).files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{const p=document.getElementById(previewId);p.src=e.target.result;p.style.display='block';};
+  r.readAsDataURL(file);
+}
+
+// ── SETUP ─────────────────────────────────────────────
+function completeSetup(){
+  const name=document.getElementById('setupName').value.trim();
+  const rooms=Number(document.getElementById('setupRooms').value)||20;
+  const pin=document.getElementById('setupPin').value.trim();
+  const pin2=document.getElementById('setupPin2').value.trim();
+  if(!name){alert('Please enter your lodge name.');return;}
+  if(pin.length!==8||isNaN(pin)){alert('PIN must be exactly 8 digits.');return;}
+  if(pin!==pin2){alert('PINs do not match.');return;}
+  cfg.name=name;cfg.rooms=rooms;cfg.pin=pin;
+  const lp=document.getElementById('logoPreview');
+  if(lp.src&&lp.style.display!=='none')cfg.logo=lp.src;
+  saveCfg();data.lastDate=today();saveData();
+  document.getElementById('setupScreen').style.display='none';
+  applyBranding();showPinScreen();
+}
+
+// ── PIN ───────────────────────────────────────────────
+let pinEntry='';
+function showPinScreen(){
+  document.getElementById('pinLodgeName').textContent=cfg.name||'Lodge Tracker Pro';
+  const pl=document.getElementById('pinLogo');
+  if(cfg.logo){pl.src=cfg.logo;pl.style.display='block';}else pl.style.display='none';
+  document.getElementById('pinScreen').style.display='flex';
+  pinEntry='';updatePinDots();
+}
+function hidePinScreen(){document.getElementById('pinScreen').style.display='none';}
+function pinKey(k){if(pinEntry.length>=8)return;pinEntry+=k;updatePinDots();if(pinEntry.length===8)setTimeout(checkPin,100);}
+function pinDel(){pinEntry=pinEntry.slice(0,-1);updatePinDots();document.getElementById('pinError').textContent='';}
+function updatePinDots(){for(let i=0;i<8;i++){const el=document.getElementById('pd'+i);if(el)el.className='pin-dot'+(i<pinEntry.length?' filled':'');}}
+function checkPin(){
+  if(pinEntry===cfg.pin){hidePinScreen();checkDayReset();}
+  else{document.getElementById('pinError').textContent='Wrong PIN. Try again.';pinEntry='';updatePinDots();}
+}
+
+// ── DAY RESET ─────────────────────────────────────────
+function checkDayReset(){
+  const t=today();
+  if(data.lastDate&&data.lastDate!==t){
+    const occ=Object.entries(data.bookings).filter(([,v])=>v);
+    if(occ.length){data.history.push({date:data.lastDate,bookings:JSON.parse(JSON.stringify(data.bookings))});}
+    if(data.history.length>30)data.history.shift();
+    data.bookings={};data.lastDate=t;saveData();showDayAlert(t);
+  }else{data.lastDate=t;saveData();}
+  renderDashboard();
+}
+function showDayAlert(ds){
+  const d=new Date(ds+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(6px);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML=`<div style="background:#161B22;border:1px solid #30363D;border-top:3px solid #F0C040;border-radius:20px;padding:32px;text-align:center;max-width:300px;box-shadow:0 24px 60px rgba(0,0,0,0.8)">
+    <div style="font-size:48px;margin-bottom:12px">🌅</div>
+    <div style="font-family:serif;font-size:22px;font-weight:700;color:#F0C040;margin-bottom:4px">New Day</div>
+    <div style="font-size:13px;color:#8B949E;margin-bottom:6px">${d}</div>
+    <div style="font-size:12px;color:#8B949E;margin-bottom:22px">All rooms have been reset.<br>Yesterday is saved in History.</div>
+    <button onclick="this.closest('div').parentNode.remove()" style="background:linear-gradient(135deg,#D4A017,#F0C040);color:#000;border:none;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Start Today →</button>
+  </div>`;
+  document.body.appendChild(ov);
+}
+
+// ── BRANDING ──────────────────────────────────────────
+function applyBranding(){
+  document.title=cfg.name||'Lodge Tracker Pro';
+  document.getElementById('headerName').textContent=cfg.name||'Lodge Tracker Pro';
+  const hl=document.getElementById('headerLogo');
+  if(cfg.logo){hl.src=cfg.logo;hl.style.display='block';}else hl.style.display='none';
+  document.getElementById('dRoomSub').textContent='of '+cfg.rooms+' rooms';
+  document.getElementById('setName').value=cfg.name;
+  document.getElementById('setRooms').value=cfg.rooms;
+  const slp=document.getElementById('setLogoPreview');
+  if(cfg.logo){slp.src=cfg.logo;slp.style.display='block';}
+}
+
+// ── SETTINGS ──────────────────────────────────────────
+function saveSettings(){
+  const name=document.getElementById('setName').value.trim();
+  const rooms=Number(document.getElementById('setRooms').value)||20;
+  if(!name){alert('Enter lodge name.');return;}
+  cfg.name=name;cfg.rooms=rooms;
+  const lp=document.getElementById('setLogoPreview');
+  if(lp.src&&lp.style.display!=='none')cfg.logo=lp.src;
+  saveCfg();applyBranding();alert('✅ Settings saved!');
+}
+function changePin(){
+  const p=document.getElementById('newPin').value.trim();
+  const p2=document.getElementById('newPin2').value.trim();
+  if(p.length!==8||isNaN(p)){alert('PIN must be 8 digits.');return;}
+  if(p!==p2){alert('PINs do not match.');return;}
+  cfg.pin=p;saveCfg();alert('✅ PIN updated!');
+  document.getElementById('newPin').value='';document.getElementById('newPin2').value='';
+}
+function resetApp(){
+  if(!confirm('Delete ALL data? This cannot be undone.'))return;
+  if(!confirm('Are you 100% sure?'))return;
+  localStorage.removeItem('ltpCfg2');localStorage.removeItem('ltpData2');location.reload();
+}
+
+// ── TABS ──────────────────────────────────────────────
+function goHome(){showTab('dashboard',document.querySelector('nav button'));}
+function showTab(id,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');btn.classList.add('active');
+  document.getElementById('backBtn').style.display=id==='dashboard'?'none':'';
+  if(id==='dashboard')renderDashboard();
+  if(id==='bookings'){renderRoomButtons();hideDetail();}
+  if(id==='staff')renderStaff();
+  if(id==='search'){document.getElementById('searchInput').value='';runSearch();}
+  if(id==='history')renderHistory();
+  if(id==='settings')loadPricingFields();
+}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});});
+
+// ── NIGHTS ────────────────────────────────────────────
+function calcNights(){
+  const di=document.getElementById('bDateIn').value;
+  const dout=document.getElementById('bDateOut').value;
+  const rate=Number(document.getElementById('bNightRate').value)||0;
+  if(di&&dout){const n=Math.max(0,Math.round((new Date(dout)-new Date(di))/86400000));document.getElementById('bNights').value=n;if(rate>0)document.getElementById('bAmount').value=n*rate;}
+}
+
+// ── ROOMS ─────────────────────────────────────────────
+let activeRoom=null;
+function buildRoomGrid(containerId,clickFn){
+  const grid=document.getElementById(containerId);grid.innerHTML='';
+  for(let i=1;i<=cfg.rooms;i++){
+    const b=data.bookings[i];
+    let cls='free',status='Free';
+    if(b){cls=b.paid==='paid'?'paid':'unpaid';status=b.paid==='paid'?'Paid':'Unpaid';}
+    const btn=document.createElement('button');
+    btn.className=`room-btn ${cls}`;
+    btn.innerHTML=`<span class="rnum">${i}</span><span class="rstatus">${status}</span>`;
+    btn.onclick=()=>clickFn(i);grid.appendChild(btn);
+  }
+}
+function renderRoomButtons(){buildRoomGrid('roomsBtnGrid',openRoom);}
+function openRoom(num){
+  activeRoom=num;renderRoomButtons();
+  const det=document.getElementById('roomDetail');det.style.display='block';
+  det.scrollIntoView({behavior:'smooth',block:'nearest'});renderRoomDetail(num);
+}
+function hideDetail(){document.getElementById('roomDetail').style.display='none';activeRoom=null;}
+
+function renderRoomDetail(num){
+  const b=data.bookings[num];
+  document.getElementById('detailTitle').textContent=`Room ${num}`;
+  const toggle=document.getElementById('paidToggle');
+  const content=document.getElementById('detailContent');
+  const actions=document.getElementById('detailActions');
+  if(!b){
+    toggle.style.display='none';
+    content.innerHTML=`<div style="text-align:center;padding:24px 0;color:var(--muted)">
+      <div style="font-size:40px;margin-bottom:8px;opacity:0.4">🛏</div>
+      <p style="font-size:14px;margin-bottom:4px">Room ${num} is available</p>
+      <p style="font-size:12px;color:var(--muted)">Tap below to check in a guest</p>
+    </div>`;
+    actions.innerHTML=`<button class="btn btn-gold" onclick="openAddBookingForRoom(${num})">+ Check In Guest</button>`;
+  } else {
+    toggle.style.display='';
+    toggle.className=`paid-toggle ${b.paid}`;
+    toggle.textContent=b.paid==='paid'?'✓ PAID':'✗ UNPAID — Tap to mark paid';
+    const initials=b.guest.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    content.innerHTML=`
+      <div class="guest-hero">
+        <div class="guest-avatar">${initials}</div>
+        <div><div class="guest-name-big">${b.guest}</div><div class="guest-phone-big">📞 ${b.phone||'No phone'}</div></div>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-box"><div class="dk">Date In</div><div class="dv">${fmtDate(b.dateIn)}</div><div class="dd">${dayName(b.dateIn)}</div></div>
+        <div class="detail-box"><div class="dk">Date Out</div><div class="dv">${fmtDate(b.dateOut)}</div><div class="dd">${dayName(b.dateOut)}</div></div>
+        <div class="detail-box"><div class="dk">Time In</div><div class="dv">${fmtTime(b.timeIn)}</div></div>
+        <div class="detail-box"><div class="dk">Time Out</div><div class="dv">${fmtTime(b.timeOut)}</div></div>
+      </div>
+      <div class="night-strip">
+        <div class="ni"><div class="nk">Nights</div><div class="nv">${b.nights||'-'}</div></div>
+        <div class="divider"></div>
+        <div class="ni"><div class="nk">Per Night</div><div class="nv">${fmt(b.nightRate)}</div></div>
+        <div class="divider"></div>
+        <div class="ni"><div class="nk">Total</div><div class="nv gold">${fmt(b.amount)}</div></div>
+      </div>
+      ${b.notes?`<div style="font-size:12px;color:var(--muted);margin-bottom:12px;padding:8px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">📝 ${b.notes}</div>`:''}`;
+    actions.innerHTML=`
+      <button class="btn btn-primary btn-sm" onclick="openEditBookingForRoom(${num})">✏ Edit</button>
+      <button class="btn btn-danger btn-sm" onclick="checkOutRoom(${num})">🚪 Check Out</button>`;
+  }
+}
+
+function openAddBookingForRoom(num){
+  document.getElementById('bookingModalTitle').textContent=`Check In — Room ${num}`;
+  document.getElementById('bookingRoomNum').value=num;
+  ['bGuest','bPhone','bNightRate','bNights','bAmount','bNotes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('bDateIn').value=today();
+  document.getElementById('bDateOut').value='';
+  document.getElementById('bTimeIn').value='14:00';
+  document.getElementById('bTimeOut').value='11:00';
+  document.getElementById('bPaid').value='unpaid';
+  openModal('bookingModal');
+}
+function openEditBookingForRoom(num){
+  const b=data.bookings[num];if(!b)return;
+  document.getElementById('bookingModalTitle').textContent=`Edit — Room ${num}`;
+  document.getElementById('bookingRoomNum').value=num;
+  document.getElementById('bGuest').value=b.guest;
+  document.getElementById('bPhone').value=b.phone||'';
+  document.getElementById('bDateIn').value=b.dateIn;
+  document.getElementById('bDateOut').value=b.dateOut;
+  document.getElementById('bTimeIn').value=b.timeIn||'14:00';
+  document.getElementById('bTimeOut').value=b.timeOut||'11:00';
+  document.getElementById('bNightRate').value=b.nightRate||'';
+  document.getElementById('bNights').value=b.nights||'';
+  document.getElementById('bAmount').value=b.amount;
+  document.getElementById('bPaid').value=b.paid||'unpaid';
+  document.getElementById('bNotes').value=b.notes||'';
+  openModal('bookingModal');
+}
+function saveBooking(){
+  const num=Number(document.getElementById('bookingRoomNum').value);
+  const guest=document.getElementById('bGuest').value.trim();
+  if(!guest){alert('Please enter guest name.');return;}
+  data.bookings[num]={guest,phone:document.getElementById('bPhone').value.trim(),dateIn:document.getElementById('bDateIn').value,dateOut:document.getElementById('bDateOut').value,timeIn:document.getElementById('bTimeIn').value,timeOut:document.getElementById('bTimeOut').value,nightRate:document.getElementById('bNightRate').value,nights:document.getElementById('bNights').value,amount:document.getElementById('bAmount').value,paid:document.getElementById('bPaid').value,notes:document.getElementById('bNotes').value.trim()};
+  saveData();closeModal('bookingModal');renderRoomButtons();renderRoomDetail(num);
+}
+function togglePaid(){
+  if(!activeRoom)return;
+  const b=data.bookings[activeRoom];if(!b)return;
+  b.paid=b.paid==='paid'?'unpaid':'paid';
+  saveData();renderRoomButtons();renderRoomDetail(activeRoom);
+}
+function checkOutRoom(num){
+  if(!confirm(`Check out from Room ${num}?`))return;
+  delete data.bookings[num];saveData();renderRoomButtons();renderRoomDetail(num);
+}
+
+// ── DASHBOARD ─────────────────────────────────────────
+function renderDashboard(){
+  const all=Object.values(data.bookings).filter(Boolean);
+  document.getElementById('dOccupied').textContent=all.length;
+  document.getElementById('dUnpaid').textContent=all.filter(b=>b.paid==='unpaid').length;
+  document.getElementById('dIncome').textContent=fmt(all.filter(b=>b.paid==='paid').reduce((a,b)=>a+Number(b.amount||0),0));
+  buildRoomGrid('dashRoomsGrid',(i)=>{showTab('bookings',document.querySelectorAll('nav button')[1]);setTimeout(()=>openRoom(i),50);});
+  renderChart();
+  checkCheckouts();
+  const rb=document.getElementById('dashBookings');
+  const entries=Object.entries(data.bookings).filter(([,v])=>v);
+  rb.innerHTML=entries.length?entries.map(([rn,b])=>`
+    <div class="booking-item">
+      <div>
+        <div class="bi-name">${b.guest} · Room ${rn}</div>
+        <div class="bi-sub">📞 ${b.phone||'-'} · ${fmtDate(b.dateIn)} → ${fmtDate(b.dateOut)} · ${b.nights||'-'} night(s) · ${fmtTime(b.timeIn)} in</div>
+      </div>
+      <div style="text-align:right">
+        <span class="badge ${b.paid==='paid'?'badge-green':'badge-red'}">${b.paid}</span>
+        <div class="bi-amount">${fmt(b.amount)}</div>
+      </div>
+    </div>`).join(''):'<div class="empty"><div class="icon">🛏</div><p>No guests checked in yet</p></div>';
+}
+
+// ── PRINT / SAVE REPORT ───────────────────────────────
+function buildReportHTML(){
+  const entries=Object.entries(data.bookings).filter(([,v])=>v);
+  const paid=entries.filter(([,b])=>b.paid==='paid');
+  const unpaid=entries.filter(([,b])=>b.paid==='unpaid');
+  const income=paid.reduce((a,[,b])=>a+Number(b.amount||0),0);
+  const total=entries.reduce((a,[,b])=>a+Number(b.amount||0),0);
+  const dateStr=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${cfg.name} — ${dateStr}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:Arial,sans-serif;background:#fff;color:#1a1a2e;padding:24px;max-width:700px;margin:0 auto;}
+    .top{display:flex;align-items:center;gap:14px;margin-bottom:4px;}
+    .logo-img{width:52px;height:52px;border-radius:10px;object-fit:cover;border:1px solid #ddd;}
+    h1{font-size:22px;color:#1B4965;}
+    .date{font-size:13px;color:#666;margin-bottom:20px;margin-top:2px;}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+    .stat{background:#f5f0e8;border-radius:8px;padding:10px 12px;text-align:center;}
+    .stat .v{font-size:20px;font-weight:800;}
+    .stat .k{font-size:10px;text-transform:uppercase;letter-spacing:0.6px;color:#666;margin-top:2px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+    th{background:#1B4965;color:#fff;padding:9px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;}
+    td{padding:9px 10px;border-bottom:1px solid #eee;font-size:12px;}
+    .paid-badge{color:#065f46;font-weight:700;background:#d1fae5;padding:2px 8px;border-radius:10px;font-size:11px;}
+    .unpaid-badge{color:#991b1b;font-weight:700;background:#fee2e2;padding:2px 8px;border-radius:10px;font-size:11px;}
+    .footer{font-size:10px;color:#aaa;text-align:center;margin-top:16px;padding-top:12px;border-top:1px solid #eee;}
+    .action-row{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+    .action-btn{padding:10px 20px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+    .btn-print{background:#1B4965;color:#fff;}
+    .btn-save{background:#C9952A;color:#fff;}
+    @media print{.action-row{display:none!important}}
+  </style></head><body>
+  <div class="top">
+    ${cfg.logo?`<img class="logo-img" src="${cfg.logo}">`:'<div style="width:52px;height:52px;border-radius:10px;background:#1B4965;display:flex;align-items:center;justify-content:center;font-size:22px">🏨</div>'}
+    <div><h1>${cfg.name}</h1><div class="date">Daily Report — ${dateStr}</div></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="v">${entries.length}/${cfg.rooms}</div><div class="k">Occupied</div></div>
+    <div class="stat"><div class="v" style="color:#065f46">${paid.length}</div><div class="k">Paid</div></div>
+    <div class="stat"><div class="v" style="color:#991b1b">${unpaid.length}</div><div class="k">Unpaid</div></div>
+    <div class="stat"><div class="v" style="color:#C9952A">K${income.toLocaleString()}</div><div class="k">Income</div></div>
+  </div>
+  <div class="action-row">
+    <button class="action-btn btn-print" onclick="window.print()">🖨 Print</button>
+    <button class="action-btn btn-save" onclick="saveDoc()">💾 Save to Device</button>
+  </div>
+  <table>
+    <thead><tr><th>Room</th><th>Guest</th><th>Phone</th><th>Date In</th><th>Date Out</th><th>Time In</th><th>Time Out</th><th>Nights</th><th>Amount</th><th>Status</th></tr></thead>
+    <tbody>
+    ${entries.length?entries.map(([rn,b])=>`<tr>
+      <td><strong>${rn}</strong></td><td>${b.guest}</td><td>${b.phone||'-'}</td>
+      <td>${fmtDate(b.dateIn)}</td><td>${fmtDate(b.dateOut)}</td>
+      <td>${fmtTime(b.timeIn)}</td><td>${fmtTime(b.timeOut)}</td><td>${b.nights||'-'}</td>
+      <td><strong>K${Number(b.amount||0).toLocaleString()}</strong></td>
+      <td><span class="${b.paid==='paid'?'paid-badge':'unpaid-badge'}">${b.paid.toUpperCase()}</span></td>
+    </tr>`).join(''):'<tr><td colspan="10" style="text-align:center;color:#999;padding:20px">No bookings today</td></tr>'}
+    <tr style="background:#f5f0e8;font-weight:700"><td colspan="8">TOTAL AMOUNT</td><td colspan="2">K${total.toLocaleString()}</td></tr>
+    </tbody>
+  </table>
+  <div class="footer">Generated by Lodge Tracker Pro · ${dateStr}</div>
+  <script>
+  function saveDoc(){
+    const html=document.documentElement.outerHTML;
+    const blob=new Blob([html],{type:'text/html'});
+    const a=document.createElement('a');
+    const d=new Date().toISOString().slice(0,10);
+    a.href=URL.createObjectURL(blob);
+    a.download='${cfg.name.replace(/\s+/g,'-')}-Report-'+d+'.html';
+    a.click();URL.revokeObjectURL(a.href);
+  }
+  <\/script>
+  </body></html>`;
+}
+
+function printReport(){
+  const html=buildReportHTML();
+  const win=window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+}
+
+function saveReport(){
+  const html=buildReportHTML();
+  const blob=new Blob([html],{type:'text/html'});
+  const a=document.createElement('a');
+  const d=new Date().toISOString().slice(0,10);
+  a.href=URL.createObjectURL(blob);
+  a.download=`${cfg.name.replace(/\s+/g,'-')}-Report-${d}.html`;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(a.href);
+}
+
+// ── STAFF ─────────────────────────────────────────────
+function renderStaff(){
+  const tbody=document.getElementById('staffTbody');
+  const empty=document.getElementById('staffEmpty');
+  if(!data.staff.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=[...data.staff].reverse().map(s=>`<tr>
+    <td><strong>${s.name}</strong></td><td>${s.role}</td><td>${s.phone||'-'}</td>
+    <td>${fmt(s.salary)}</td>
+    <td><span class="badge ${s.status==='active'?'badge-green':'badge-gray'}">${s.status}</span></td>
+    <td><button class="btn btn-primary btn-sm" onclick="editStaff('${s.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="deleteStaff('${s.id}')">Del</button></td>
+  </tr>`).join('');
+}
+function openAddStaff(){
+  document.getElementById('staffModalTitle').textContent='Add Staff Member';
+  document.getElementById('staffId').value='';
+  ['sName','sPhone','sSalary'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('sRole').value='Receptionist';
+  document.getElementById('sStatus').value='active';
+  document.getElementById('sStart').value=today();
+  openModal('staffModal');
+}
+function saveStaff(){
+  const id=document.getElementById('staffId').value||uid();
+  const obj={id,name:document.getElementById('sName').value.trim(),role:document.getElementById('sRole').value,phone:document.getElementById('sPhone').value.trim(),salary:document.getElementById('sSalary').value,status:document.getElementById('sStatus').value,start:document.getElementById('sStart').value};
+  if(!obj.name){alert('Enter staff name.');return;}
+  const idx=data.staff.findIndex(s=>s.id===id);
+  if(idx>=0)data.staff[idx]=obj;else data.staff.push(obj);
+  saveData();closeModal('staffModal');renderStaff();
+}
+function editStaff(id){
+  const s=data.staff.find(s=>s.id===id);if(!s)return;
+  document.getElementById('staffModalTitle').textContent='Edit Staff';
+  document.getElementById('staffId').value=s.id;
+  document.getElementById('sName').value=s.name;
+  document.getElementById('sRole').value=s.role;
+  document.getElementById('sPhone').value=s.phone||'';
+  document.getElementById('sSalary').value=s.salary;
+  document.getElementById('sStatus').value=s.status;
+  document.getElementById('sStart').value=s.start||'';
+  openModal('staffModal');
+}
+function deleteStaff(id){
+  if(!confirm('Remove this staff member?'))return;
+  data.staff=data.staff.filter(s=>s.id!==id);saveData();renderStaff();
+}
+
+// ── HISTORY ───────────────────────────────────────────
+function renderHistory(){
+  const el=document.getElementById('historyContent');
+  const hist=[...(data.history||[])].reverse();
+  if(!hist.length){el.innerHTML='<div class="empty"><div class="icon">📅</div><p>No history yet. Previous days appear here automatically.</p></div>';return;}
+  el.innerHTML=hist.map(h=>{
+    const entries=Object.entries(h.bookings).filter(([,v])=>v);
+    const total=entries.reduce((a,[,b])=>a+Number(b.amount||0),0);
+    const paid=entries.filter(([,b])=>b.paid==='paid').length;
+    const unpaid=entries.filter(([,b])=>b.paid==='unpaid').length;
+    const d=new Date(h.date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    return`<div class="history-day">
+      <div class="history-day-head">
+        <div class="hd-date">${d}</div>
+        <div class="hd-stats">${entries.length} rooms · <span style="color:var(--green)">${paid} paid</span> · <span style="color:var(--red)">${unpaid} unpaid</span> · <strong style="color:var(--gold)">${fmt(total)}</strong></div>
+      </div>
+      ${entries.map(([rn,b])=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);font-size:13px">
+          <div><strong style="color:var(--text)">Room ${rn}</strong> — ${b.guest}
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">📞 ${b.phone||'-'} · ${fmtDate(b.dateIn)} ${fmtTime(b.timeIn)} → ${fmtDate(b.dateOut)} ${fmtTime(b.timeOut)} · ${b.nights||'-'} night(s)</div></div>
+          <div style="text-align:right"><span class="badge ${b.paid==='paid'?'badge-green':'badge-red'}">${b.paid}</span><div style="font-weight:700;color:var(--gold);margin-top:4px">${fmt(b.amount)}</div></div>
+        </div>`).join('')||'<div style="padding:12px 16px;color:var(--muted);font-size:13px">No bookings</div>'}
+    </div>`;
+  }).join('');
+}
+
+
+// ── ROOM PRICING ──────────────────────────────────────
+function savePricing(){
+  cfg.pricing={
+    Single:document.getElementById('priceSingle').value,
+    Double:document.getElementById('priceDouble').value,
+    Twin:document.getElementById('priceTwin').value,
+    Suite:document.getElementById('priceSuite').value,
+    Family:document.getElementById('priceFamily').value,
+    Standard:document.getElementById('priceStandard').value,
+  };
+  saveCfg();
+}
+function loadPricingFields(){
+  if(!cfg.pricing)return;
+  ['Single','Double','Twin','Suite','Family','Standard'].forEach(t=>{
+    const el=document.getElementById('price'+t);
+    if(el&&cfg.pricing[t]) el.value=cfg.pricing[t];
+  });
+}
+function applyRoomPrice(){
+  const type=document.getElementById('bRoomType').value;
+  if(!type||!cfg.pricing||!cfg.pricing[type])return;
+  document.getElementById('bNightRate').value=cfg.pricing[type];
+  calcNights();
+}
+
+// ── CHECKOUT ALERTS ───────────────────────────────────
+function openCheckoutModal(){
+  checkCheckouts();
+  openModal('checkoutModal');
+}
+
+function checkCheckouts(){
+  const t=today();
+  const now=new Date();
+  const nowMins=now.getHours()*60+now.getMinutes();
+  const due=Object.entries(data.bookings).filter(([,b])=>b&&b.dateOut===t);
+  const badge=document.getElementById('checkoutBtnBadge');
+  const btn=document.getElementById('checkoutBtn');
+  const list=document.getElementById('checkoutAlertList');
+
+  // Update button badge
+  if(due.length){
+    badge.style.display='';
+    badge.textContent=due.length;
+    btn.style.borderColor='rgba(248,81,73,0.6)';
+    btn.style.background='rgba(248,81,73,0.15)';
+  } else {
+    badge.style.display='none';
+    btn.style.borderColor='rgba(248,81,73,0.2)';
+    btn.style.background='rgba(248,81,73,0.05)';
+    btn.style.color='var(--muted)';
+  }
+
+  // Build modal list
+  if(!list) return;
+  if(!due.length){
+    list.innerHTML='<div class="empty" style="padding:20px 0"><div class="icon">✅</div><p>No checkouts due today</p></div>';
+    return;
+  }
+
+  list.innerHTML=due.map(([rn,b])=>{
+    let status=''; let color='var(--red)'; let icon='⏰';
+    if(b.timeOut){
+      const[h,m]=b.timeOut.split(':');
+      const outMins=Number(h)*60+Number(m);
+      const diff=outMins-nowMins;
+      if(diff<0){
+        status=`<span style="color:var(--red);font-weight:700"> — OVERDUE by ${Math.abs(diff)} min</span>`;
+        icon='🚨'; color='var(--red)';
+      } else if(diff<=30){
+        status=`<span style="color:#F0C040;font-weight:700"> — Due in ${diff} min</span>`;
+        icon='⚠️'; color='#F0C040';
+      } else {
+        status=`<span style="color:var(--muted)"> — By ${fmtTime(b.timeOut)}</span>`;
+        icon='⏰'; color='var(--green)';
+      }
+    }
+    return`<div style="border-left:3px solid ${color};padding:10px 12px;margin-bottom:8px;background:var(--surface2);border-radius:0 8px 8px 0">
+      <div style="font-size:14px;font-weight:700;color:var(--text)">${icon} Room ${rn} — ${b.guest}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:3px">📞 ${b.phone||'-'} · Checkout: ${fmtTime(b.timeOut)}${status}</div>
+    </div>`;
+  }).join('');
+}
+
+// Run checkout check every minute automatically
+setInterval(()=>{
+  if(document.getElementById('dashboard').classList.contains('active')) checkCheckouts();
+}, 60000);
+
+// Browser notification for overdue checkouts
+function requestNotifPermission(){
+  if('Notification' in window && Notification.permission==='default') Notification.requestPermission();
+}
+function sendCheckoutNotif(roomNum, guestName){
+  if('Notification' in window && Notification.permission==='granted'){
+    new Notification('⏰ Checkout Overdue', {
+      body:`Room ${roomNum} — ${guestName} is past checkout time`,
+      icon:'',
+    });
+  }
+}
+// Check and fire notifications for overdue rooms
+function fireOverdueNotifs(){
+  const t=today();
+  const now=new Date();
+  const nowMins=now.getHours()*60+now.getMinutes();
+  Object.entries(data.bookings).filter(([,b])=>b&&b.dateOut===t&&b.timeOut).forEach(([rn,b])=>{
+    const[h,m]=b.timeOut.split(':');
+    const outMins=Number(h)*60+Number(m);
+    if(nowMins>outMins) sendCheckoutNotif(rn, b.guest);
+  });
+}
+setInterval(fireOverdueNotifs, 300000); // every 5 min
+
+// ── INCOME CHART ──────────────────────────────────────
+function renderChart(){
+  const chart=document.getElementById('incomeChart');
+  if(!chart)return;
+  // Build last 7 days
+  const days=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    days.push(d.toISOString().slice(0,10));
+  }
+  // Get income per day from history + today
+  const incomeMap={};
+  (data.history||[]).forEach(h=>{
+    const total=Object.values(h.bookings).filter(Boolean)
+      .filter(b=>b.paid==='paid').reduce((a,b)=>a+Number(b.amount||0),0);
+    incomeMap[h.date]=total;
+  });
+  // Today
+  const todayIncome=Object.values(data.bookings).filter(Boolean)
+    .filter(b=>b.paid==='paid').reduce((a,b)=>a+Number(b.amount||0),0);
+  incomeMap[today()]=todayIncome;
+
+  const values=days.map(d=>incomeMap[d]||0);
+  const maxVal=Math.max(...values,1);
+
+  chart.innerHTML=days.map((d,i)=>{
+    const val=values[i];
+    const pct=Math.max((val/maxVal)*100,val>0?8:2);
+    const label=new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short'});
+    const isToday=d===today();
+    return`<div class="chart-bar-wrap">
+      <div class="chart-bar" style="height:${pct}%;${isToday?'background:linear-gradient(180deg,#F0C040,#D4A017);box-shadow:0 0 8px rgba(240,192,64,0.4)':''}" data-tip="K${val.toLocaleString()}"></div>
+      <div class="chart-bar-label" style="${isToday?'color:var(--gold);font-weight:700':''}">${label}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── SEARCH ────────────────────────────────────────────
+function runSearch(){
+  const q=document.getElementById('searchInput').value.toLowerCase().trim();
+  const el=document.getElementById('searchResults');
+  if(!q){el.innerHTML='<div class="empty"><div class="icon">🔍</div><p>Type a name or phone number to search</p></div>';return;}
+
+  // Search today's bookings
+  const todayResults=Object.entries(data.bookings).filter(([,b])=>b&&(
+    b.guest.toLowerCase().includes(q)||(b.phone||'').includes(q)
+  )).map(([rn,b])=>({...b,room:rn,day:'Today'}));
+
+  // Search history
+  const histResults=[];
+  (data.history||[]).forEach(h=>{
+    Object.entries(h.bookings).filter(([,b])=>b&&(
+      b.guest.toLowerCase().includes(q)||(b.phone||'').includes(q)
+    )).forEach(([rn,b])=>histResults.push({...b,room:rn,day:fmtDate(h.date)}));
+  });
+
+  const all=[...todayResults,...histResults];
+  if(!all.length){el.innerHTML='<div class="empty"><div class="icon">🔍</div><p>No guests found</p></div>';return;}
+
+  el.innerHTML='<div class="search-results">'+all.map(b=>`
+    <div class="search-result-item">
+      <div>
+        <div style="font-weight:700;color:var(--text)">${b.guest} <span style="font-size:11px;color:var(--muted)">· Room ${b.room}</span></div>
+        <div style="font-size:11px;color:var(--muted)">📞 ${b.phone||'-'} · ${fmtDate(b.dateIn)} → ${fmtDate(b.dateOut)} · ${b.nights||'-'} night(s)</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${b.day}</div>
+      </div>
+      <div style="text-align:right">
+        <span class="badge ${b.paid==='paid'?'badge-green':'badge-red'}">${b.paid}</span>
+        <div style="font-weight:700;color:var(--gold);margin-top:4px">${fmt(b.amount)}</div>
+      </div>
+    </div>`).join('')+'</div>';
+}
+
+// ── INIT ──────────────────────────────────────────────
+document.getElementById('addStaffBtn').onclick=openAddStaff;
+document.getElementById('headerDate').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+
+loadAll();
+applyBranding();
+requestNotifPermission();
+// Register service worker for offline PWA
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').then(()=>console.log('SW registered')).catch(()=>{});
+}
+// If no PIN or old PIN shorter than 8 digits, go to setup
+if(!cfg.pin || cfg.pin.length !== 8){
+  cfg.pin='';
+  saveCfg();
+  // Pre-fill lodge name/rooms if already set
+  if(cfg.name){
+    document.getElementById('setupName').value = cfg.name;
+    document.getElementById('setupRooms').value = cfg.rooms;
+  }
+  document.getElementById('setupScreen').style.display='flex';
+}
+else{showPinScreen();}
+</script>
+</body>
+</html>
